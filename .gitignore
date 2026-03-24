@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.egg-info/
+neofs_api_tmp/
+.vscode/
+.idea/
+wallet.json
+test_image.png
+images.jpeg
+*.pyc
+*.pyo
