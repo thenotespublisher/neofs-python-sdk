@@ -7,7 +7,7 @@ console = Console()
 
 @app.command()
 def create_container(wallet: str, password: str, name: str, mainnet: bool = False):
-    endpoint = "st01.fs.neo.org:8082" if mainnet else "st01.testnet.fs.neo.org:8082"
+    endpoint = "st1.fs.neo.org:8082" if mainnet else "st1.t5.fs.neo.org:8082"
     client = NeoFSClient(endpoint=endpoint)
     client.load_wallet(wallet, password)
     
@@ -16,7 +16,7 @@ def create_container(wallet: str, password: str, name: str, mainnet: bool = Fals
 
 @app.command()
 def upload(file_path: str, container: str, wallet: str, password: str, mainnet: bool = False):
-    endpoint = "st01.fs.neo.org:8082" if mainnet else "st01.testnet.fs.neo.org:8082"
+    endpoint = "st1.fs.neo.org:8082" if mainnet else "st1.t5.fs.neo.org:8082"
     client = NeoFSClient(endpoint=endpoint)
     client.load_wallet(wallet, password)
     
@@ -25,7 +25,7 @@ def upload(file_path: str, container: str, wallet: str, password: str, mainnet: 
 
 @app.command()
 def download(object_id: str, container: str, out_path: str, wallet: str, password: str, mainnet: bool = False):
-    endpoint = "st01.fs.neo.org:8082" if mainnet else "st01.testnet.fs.neo.org:8082"
+    endpoint = "st1.fs.neo.org:8082" if mainnet else "st1.t5.fs.neo.org:8082"
     client = NeoFSClient(endpoint=endpoint)
     client.load_wallet(wallet, password)
     

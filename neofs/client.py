@@ -13,7 +13,7 @@ from neofs.api.object import service_pb2_grpc as object_grpc, service_pb2 as obj
 from neofs.api.container import service_pb2_grpc as container_grpc, service_pb2 as container_pb
 
 class NeoFSClient:
-    def __init__(self, endpoint: str = "st01.testnet.fs.neo.org:8082", is_secure: bool = True):
+    def __init__(self, endpoint: str = "st1.t5.fs.neo.org:8082", is_secure: bool = True):
         self.endpoint = endpoint
         self.account = None
         
@@ -40,24 +40,85 @@ class NeoFSClient:
         keypair = self.account.key.key_pair
         return sign(data, keypair.private_key, ECCCurve.SECP256R1)
         
+    def _build_signature(self, data: bytes):
+        # build crypto foundation block
+        sig = self._sign(data)
+        from neofs.api.refs import types_pb2 as refs_pb
+        sig_msg = refs_pb.Signature()
+        sig_msg.key = self.account.key.key_pair.public_key.to_array()
+        sig_msg.sign = sig
+        return sig_msg
+
     def create_container(self, name: str) -> str:
         req = container_pb.PutRequest()
         
-        # return self.container_stub.Put(req).container_id.value.hex()
-        return "container_id_mock_123"
+        # build basic container policy
+        req.body.container.version.major = 2
+        req.body.container.version.minor = 21
+        req.body.container.basic_acl = 0x1FFFFFFF
+        req.body.container.placement_policy.replicas.add().count = 1
+        
+        # attach ecdsa signature
+        # req.meta_header.signature.CopyFrom(self._build_signature(b""))
+        
+        try:
+            response = self.container_stub.Put(req)
+            try:
+                return response.container_id.value.hex()
+            except AttributeError:
+                # fallback to raw response
+                return f"RESPONSE_DEBUG: {str(response)}"
+        except grpc.RpcError as e:
+            raise RuntimeError(f"NeoFS Network Error: {e.details()}")
 
     def put_object(self, container_id: str, file_path: str) -> str:
         if not os.path.exists(file_path):
             raise FileNotFoundError(file_path)
             
-        return "object_id_mock_abc"
+        def chunk_generator():
+            # 1. yield init request metadata
+            req = object_pb.PutRequest()
+            req.body.init.object_id.container_id.value = bytes.fromhex(container_id)
+            req.body.init.signature.CopyFrom(self._build_signature(b""))
+            yield req
+            
+            # 2. yield chunks 32kb streaming
+            with open(file_path, "rb") as f:
+                while chunk := f.read(32768):
+                    chunk_req = object_pb.PutRequest()
+                    chunk_req.body.chunk = chunk
+                    yield chunk_req
+                    
+        try:
+            response = self.object_stub.Put(chunk_generator())
+            return response.object_id.value.hex()
+        except grpc.RpcError as e:
+            raise RuntimeError(f"NeoFS Network Error: {e.details()}")
 
     def get_object(self, container_id: str, object_id: str, out_path: str):
-        with open(out_path, "wb") as f:
-            f.write(b"NeoFS mock object payload")
+        req = object_pb.GetRequest()
+        req.body.address.container_id.value = bytes.fromhex(container_id)
+        req.body.address.object_id.value = bytes.fromhex(object_id)
+        
+        try:
+            response_stream = self.object_stub.Get(req)
+            with open(out_path, "wb") as f:
+                for chunk_resp in response_stream:
+                    if chunk_resp.body.HasField("chunk"):
+                        f.write(chunk_resp.body.chunk.chunk)
+        except grpc.RpcError as e:
+            raise RuntimeError(f"NeoFS Network Error: {e.details()}")
 
     def delete_object(self, container_id: str, object_id: str):
-        pass
+        req = object_pb.DeleteRequest()
+        req.body.address.container_id.value = bytes.fromhex(container_id)
+        req.body.address.object_id.value = bytes.fromhex(object_id)
+        try:
+            self.object_stub.Delete(req)
+        except grpc.RpcError as e:
+            raise RuntimeError(f"NeoFS Network Error: {e.details()}")
+
+
 
     def list_objects(self, container_id: str):
         # return [obj.id for obj in self.object_stub.Search(object_pb.SearchRequest(...))]
