@@ -26,7 +26,7 @@ python generate_protos.py
 
 ## Usage
 
-A standard CLI interface is provided for quick interaction with containers and objects. Note that arguments are positioned sequentially.
+A standard CLI interface is provided for quick interaction with containers and objects natively against the Neo `T5` Testnet nodes. Note that arguments are positioned sequentially.
 
 ```bash
 # Initialize a container
@@ -37,6 +37,15 @@ neofs upload data.json my_container wallet.json secret_password
 
 # Retrieve an object by its ID
 neofs download <object_id> my_container fetched_data.json wallet.json secret_password
+```
+
+## Testing
+
+The SDK includes an automated `pytest` suite that natively asserts the integrity of the CLI routing paths without requiring a manual mock wallet instantiation:
+
+```bash
+pip install pytest
+pytest tests/
 ```
 
 ## License
