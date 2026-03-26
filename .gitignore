@@ -9,3 +9,4 @@ test_image.png
 images.jpeg
 *.pyc
 *.pyo
+output.txt
