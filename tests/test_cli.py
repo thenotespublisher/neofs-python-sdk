@@ -15,4 +15,5 @@ def test_cli_missing_args():
     """verify the CLI properly routes and blocks incomplete arg"""
     result = runner.invoke(app, ["upload"])
     assert result.exit_code != 0
-    assert "Missing argument" in result.stdout
+    # typer outputs errors to stderr, so check combined output
+    assert "Missing argument" in result.output
