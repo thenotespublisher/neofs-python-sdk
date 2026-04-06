@@ -10,3 +10,7 @@ images.jpeg
 *.pyc
 *.pyo
 output.txt
+downloaded_test.jpg
+downloaded.jpeg
+check_network.py
+check_balance.py
