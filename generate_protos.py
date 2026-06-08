@@ -17,7 +17,7 @@ def main():
     if os.path.exists(CLONE_DIR):
         shutil.rmtree(CLONE_DIR, onerror=on_rm_error)
         
-    subprocess.run(["git", "clone", "--depth", "1", "--branch", "v2.21.0", NEOFS_API_REPO, CLONE_DIR], check=True)
+    subprocess.run(["git", "clone", "--depth", "1", "--branch", "v2.23.0", NEOFS_API_REPO, CLONE_DIR], check=True)
     
     os.makedirs(PROTO_OUT_DIR, exist_ok=True)
     proto_files = list(Path(CLONE_DIR).rglob("*.proto"))

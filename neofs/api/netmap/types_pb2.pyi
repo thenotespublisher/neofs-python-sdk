@@ -75,7 +75,7 @@ class Replica(_message.Message):
     def __init__(self, count: _Optional[int] = ..., selector: _Optional[str] = ...) -> None: ...
 
 class PlacementPolicy(_message.Message):
-    __slots__ = ("replicas", "container_backup_factor", "selectors", "filters", "subnet_id", "ec_rules")
+    __slots__ = ("replicas", "container_backup_factor", "selectors", "filters", "subnet_id", "ec_rules", "initial")
     class ECRule(_message.Message):
         __slots__ = ("data_part_num", "parity_part_num", "selector")
         DATA_PART_NUM_FIELD_NUMBER: _ClassVar[int]
@@ -85,19 +85,30 @@ class PlacementPolicy(_message.Message):
         parity_part_num: int
         selector: str
         def __init__(self, data_part_num: _Optional[int] = ..., parity_part_num: _Optional[int] = ..., selector: _Optional[str] = ...) -> None: ...
+    class Initial(_message.Message):
+        __slots__ = ("replica_limits", "max_replicas", "prefer_local")
+        REPLICA_LIMITS_FIELD_NUMBER: _ClassVar[int]
+        MAX_REPLICAS_FIELD_NUMBER: _ClassVar[int]
+        PREFER_LOCAL_FIELD_NUMBER: _ClassVar[int]
+        replica_limits: _containers.RepeatedScalarFieldContainer[int]
+        max_replicas: int
+        prefer_local: bool
+        def __init__(self, replica_limits: _Optional[_Iterable[int]] = ..., max_replicas: _Optional[int] = ..., prefer_local: bool = ...) -> None: ...
     REPLICAS_FIELD_NUMBER: _ClassVar[int]
     CONTAINER_BACKUP_FACTOR_FIELD_NUMBER: _ClassVar[int]
     SELECTORS_FIELD_NUMBER: _ClassVar[int]
     FILTERS_FIELD_NUMBER: _ClassVar[int]
     SUBNET_ID_FIELD_NUMBER: _ClassVar[int]
     EC_RULES_FIELD_NUMBER: _ClassVar[int]
+    INITIAL_FIELD_NUMBER: _ClassVar[int]
     replicas: _containers.RepeatedCompositeFieldContainer[Replica]
     container_backup_factor: int
     selectors: _containers.RepeatedCompositeFieldContainer[Selector]
     filters: _containers.RepeatedCompositeFieldContainer[Filter]
     subnet_id: _types_pb2.SubnetID
     ec_rules: _containers.RepeatedCompositeFieldContainer[PlacementPolicy.ECRule]
-    def __init__(self, replicas: _Optional[_Iterable[_Union[Replica, _Mapping]]] = ..., container_backup_factor: _Optional[int] = ..., selectors: _Optional[_Iterable[_Union[Selector, _Mapping]]] = ..., filters: _Optional[_Iterable[_Union[Filter, _Mapping]]] = ..., subnet_id: _Optional[_Union[_types_pb2.SubnetID, _Mapping]] = ..., ec_rules: _Optional[_Iterable[_Union[PlacementPolicy.ECRule, _Mapping]]] = ...) -> None: ...
+    initial: PlacementPolicy.Initial
+    def __init__(self, replicas: _Optional[_Iterable[_Union[Replica, _Mapping]]] = ..., container_backup_factor: _Optional[int] = ..., selectors: _Optional[_Iterable[_Union[Selector, _Mapping]]] = ..., filters: _Optional[_Iterable[_Union[Filter, _Mapping]]] = ..., subnet_id: _Optional[_Union[_types_pb2.SubnetID, _Mapping]] = ..., ec_rules: _Optional[_Iterable[_Union[PlacementPolicy.ECRule, _Mapping]]] = ..., initial: _Optional[_Union[PlacementPolicy.Initial, _Mapping]] = ...) -> None: ...
 
 class NodeInfo(_message.Message):
     __slots__ = ("public_key", "addresses", "attributes", "state")

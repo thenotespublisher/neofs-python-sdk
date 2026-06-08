@@ -84,7 +84,7 @@ class NeoFSClient:
 
     def _prepare_meta(self, req):
         req.meta_header.version.major = 2
-        req.meta_header.version.minor = 21
+        req.meta_header.version.minor = 23
         req.meta_header.ttl = 2
         req.meta_header.epoch = 0
 
@@ -118,6 +118,9 @@ class NeoFSClient:
             token.body.lifetime.exp = 999999
             token.body.lifetime.nbf = 0
             token.body.lifetime.iat = 0
+
+            # Session token v2 support
+            token.body.version = 2
 
             if kind == "container":
                 token.body.container.verb = session_types.ContainerSessionContext.PUT
@@ -160,7 +163,7 @@ class NeoFSClient:
             self._prepare_meta(req)
 
             req.body.container.version.major = 2
-            req.body.container.version.minor = 21
+            req.body.container.version.minor = 23
             req.body.container.nonce = uuid.uuid4().bytes
             req.body.container.basic_acl = 0x1FFFFFFF
             req.body.container.placement_policy.replicas.add().count = 1
@@ -256,8 +259,6 @@ class NeoFSClient:
             req.body.init.header.payload_length = length
             req.body.init.header.payload_hash.type = refs_pb.SHA256
             req.body.init.header.payload_hash.sum = payload_mac
-            req.body.init.header.homomorphic_hash.type = 1
-            req.body.init.header.homomorphic_hash.sum = b'\x00' * 64
 
             header_bytes = req.body.init.header.SerializeToString()
             object_id_bytes = hashlib.sha256(header_bytes).digest()
@@ -287,11 +288,17 @@ class NeoFSClient:
         except grpc.RpcError as e:
             raise RuntimeError(f"neofs error: {e.details()}")
 
-    def get_object(self, container_id: str, object_id: str, out_path: str):
+    def get_object(self, container_id: str, object_id: str, out_path: str, offset: int = 0, length: int = 0):
         req = object_pb.GetRequest()
         self._prepare_meta(req)
         req.body.address.container_id.value = bytes.fromhex(container_id)
         req.body.address.object_id.value = bytes.fromhex(object_id)
+        
+        # Add ranged GET support (API 2.23)
+        if offset > 0 or length > 0:
+            req.body.range.offset = offset
+            req.body.range.length = length
+        
         self._sign_request(req)
 
         try:
@@ -318,7 +325,7 @@ class NeoFSClient:
         req = object_pb.SearchRequest()
         self._prepare_meta(req)
         req.body.container_id.value = bytes.fromhex(container_id)
-        req.body.version = 1
+        req.body.version = 2
         self._sign_request(req)
 
         try:
@@ -440,7 +447,7 @@ class NeoFSClient:
             self._prepare_meta(req)
 
             req.body.container.version.major = 2
-            req.body.container.version.minor = 21
+            req.body.container.version.minor = 23
             req.body.container.nonce = uuid.uuid4().bytes
             req.body.container.basic_acl = acl_value
             req.body.container.placement_policy.replicas.add().count = 1

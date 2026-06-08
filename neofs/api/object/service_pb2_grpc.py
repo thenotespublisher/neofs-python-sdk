@@ -285,6 +285,8 @@ class ObjectServiceServicer(object):
         restored by concatenation of all received payload chunks keeping the receiving
         order.
 
+        DEPRECATED: use `Get` with `range` (and `payload_only` if needed) parameter.
+
         Extended headers can change `GetRange` behaviour:
         * __NEOFS__NETMAP_EPOCH \
         Will use the requsted version of Network Map for object placement
@@ -321,6 +323,8 @@ class ObjectServiceServicer(object):
         applying XOR operation with the provided `salt`. Ranges are set of (offset,
         length) tuples. Hashes order in response corresponds to the ranges order in
         the request. Note that hash is calculated for XORed data.
+
+        DEPRECATED: no valid use cases.
 
         Extended headers can change `GetRangeHash` behaviour:
         * __NEOFS__NETMAP_EPOCH \

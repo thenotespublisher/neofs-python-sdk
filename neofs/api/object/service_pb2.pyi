@@ -13,12 +13,16 @@ DESCRIPTOR: _descriptor.FileDescriptor
 class GetRequest(_message.Message):
     __slots__ = ("body", "meta_header", "verify_header")
     class Body(_message.Message):
-        __slots__ = ("address", "raw")
+        __slots__ = ("address", "raw", "range", "payload_only")
         ADDRESS_FIELD_NUMBER: _ClassVar[int]
         RAW_FIELD_NUMBER: _ClassVar[int]
+        RANGE_FIELD_NUMBER: _ClassVar[int]
+        PAYLOAD_ONLY_FIELD_NUMBER: _ClassVar[int]
         address: _types_pb2_1.Address
         raw: bool
-        def __init__(self, address: _Optional[_Union[_types_pb2_1.Address, _Mapping]] = ..., raw: bool = ...) -> None: ...
+        range: Range
+        payload_only: bool
+        def __init__(self, address: _Optional[_Union[_types_pb2_1.Address, _Mapping]] = ..., raw: bool = ..., range: _Optional[_Union[Range, _Mapping]] = ..., payload_only: bool = ...) -> None: ...
     BODY_FIELD_NUMBER: _ClassVar[int]
     META_HEADER_FIELD_NUMBER: _ClassVar[int]
     VERIFY_HEADER_FIELD_NUMBER: _ClassVar[int]

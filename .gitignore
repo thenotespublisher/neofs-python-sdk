@@ -14,3 +14,6 @@ downloaded_test.jpg
 downloaded.jpeg
 check_network.py
 check_balance.py
+dist/
+test_v023.py
+clean_and_build.py
