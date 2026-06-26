@@ -106,6 +106,37 @@ def list_objects(
 
 
 @app.command()
+def search_objects(
+    container: str,
+    wallet: str,
+    password: str,
+    filter: str = typer.Option(..., "--filter", help="attribute filter as key=value (e.g. FileName=photo.jpg)"),
+    mainnet: bool = False,
+):
+    """search objects in a container by attribute value."""
+    if "=" not in filter:
+        console.print("[red]--filter must be in key=value format[/red]")
+        raise typer.Exit(1)
+
+    key, value = filter.split("=", 1)
+    endpoint = "st1.fs.neo.org:8082" if mainnet else "st1.t5.fs.neo.org:8082"
+    client = NeoFSClient(endpoint=endpoint)
+    client.load_wallet(wallet, password)
+
+    oids = client.search_objects_by_attribute(container, key, value)
+
+    if not oids:
+        console.print(f"[yellow]no objects found where {key}={value}[/yellow]")
+        return
+
+    table = Table(title=f"objects where {key}={value}")
+    table.add_column("object id", style="cyan")
+    for oid in oids:
+        table.add_row(oid)
+    console.print(table)
+
+
+@app.command()
 def get_acl(
     container: str,
     wallet: str,

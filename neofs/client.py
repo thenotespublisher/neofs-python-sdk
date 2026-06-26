@@ -321,6 +321,73 @@ class NeoFSClient:
         except grpc.RpcError as e:
             raise RuntimeError(f"NeoFS Network Error: {e.details()}")
 
+    # Container attribute management (NeoFS v0.51.0+)
+
+    LOCK_UNTIL_KEY = "__NEOFS__LOCK_UNTIL"
+
+    def set_attribute(self, container_id: str, key: str, value: str, valid_until: int = 0):
+        """sets a key/value attribute on a container. valid_until is an epoch number (0 = no expiry)."""
+        cid_bytes = bytes.fromhex(container_id)
+
+        req = container_pb.SetAttributeRequest()
+
+        # build and sign the inner Parameters message
+        req.body.parameters.container_id.value = cid_bytes
+        req.body.parameters.attribute = key
+        req.body.parameters.value = value
+        if valid_until:
+            req.body.parameters.valid_until = valid_until
+
+        params_bytes = req.body.parameters.SerializeToString()
+        req.body.signature.CopyFrom(self._build_signature_rfc6979(params_bytes))
+
+        # sign the full body
+        body_bytes = req.body.SerializeToString()
+        req.body_signature.CopyFrom(self._build_signature(body_bytes))
+
+        try:
+            resp = self.container_stub.SetAttribute(req, timeout=30)
+            if hasattr(resp, "status") and resp.status.code != 0:
+                raise RuntimeError(
+                    f"container.set_attribute failed, status {resp.status.code}: {resp.status.message}"
+                )
+            logger.info("attribute set on %s: %s=%s", container_id[:12], key, value)
+        except grpc.RpcError as e:
+            raise RuntimeError(f"neofs error: {e.details()}")
+
+    def remove_attribute(self, container_id: str, key: str, valid_until: int = 0):
+        """removes an attribute from a container by key."""
+        cid_bytes = bytes.fromhex(container_id)
+
+        req = container_pb.RemoveAttributeRequest()
+
+        req.body.parameters.container_id.value = cid_bytes
+        req.body.parameters.attribute = key
+        if valid_until:
+            req.body.parameters.valid_until = valid_until
+
+        params_bytes = req.body.parameters.SerializeToString()
+        req.body.signature.CopyFrom(self._build_signature_rfc6979(params_bytes))
+
+        body_bytes = req.body.SerializeToString()
+        req.body_signature.CopyFrom(self._build_signature(body_bytes))
+
+        try:
+            resp = self.container_stub.RemoveAttribute(req, timeout=30)
+            if hasattr(resp, "status") and resp.status.code != 0:
+                raise RuntimeError(
+                    f"container.remove_attribute failed, status {resp.status.code}: {resp.status.message}"
+                )
+            logger.info("attribute removed from %s: %s", container_id[:12], key)
+        except grpc.RpcError as e:
+            raise RuntimeError(f"neofs error: {e.details()}")
+
+    def lock_container(self, container_id: str, until_epoch: int):
+        """locks a container until the given epoch via the __NEOFS__LOCK_UNTIL system attribute.
+        the container cannot be deleted while the lock is active."""
+        self.set_attribute(container_id, self.LOCK_UNTIL_KEY, str(until_epoch))
+        logger.info("container %s locked until epoch %d", container_id[:12], until_epoch)
+
     def list_objects(self, container_id: str) -> list[str]:
         req = object_pb.SearchRequest()
         self._prepare_meta(req)
@@ -336,6 +403,48 @@ class NeoFSClient:
             return oids
         except grpc.RpcError as e:
             raise RuntimeError(f"NeoFS Network Error: {e.details()}")
+
+    def search_objects_by_attribute(self, container_id: str, key: str, value: str) -> list[str]:
+        """searches for objects in a container where the given attribute key equals value.
+        uses SearchV2 with cursor-based pagination; returns all matching object ids as hex strings."""
+        from neofs.api.object import types_pb2 as object_types_pb
+
+        cid_bytes = bytes.fromhex(container_id)
+        oids: list[str] = []
+        cursor = ""
+
+        while True:
+            req = object_pb.SearchV2Request()
+            self._prepare_meta(req)
+            req.body.container_id.value = cid_bytes
+            req.body.version = 1
+            req.body.count = 1000
+
+            f = req.body.filters.add()
+            f.match_type = object_types_pb.STRING_EQUAL
+            f.key = key
+            f.value = value
+
+            if cursor:
+                req.body.cursor = cursor
+
+            self._sign_request(req)
+
+            try:
+                resp = self.object_stub.SearchV2(req, timeout=30)
+                self._check_response_status(resp, "Object.SearchV2")
+
+                for item in resp.body.result:
+                    oids.append(item.id.value.hex())
+
+                cursor = resp.body.cursor
+                if not cursor:
+                    break
+            except grpc.RpcError as e:
+                raise RuntimeError(f"NeoFS Network Error: {e.details()}")
+
+        logger.debug("search %s=%s found %d objects", key, value, len(oids))
+        return oids
 
     # EVM funding
 
