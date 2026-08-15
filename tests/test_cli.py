@@ -1,3 +1,8 @@
+import pytest
+
+# Skip CLI import entirely if protobuf runtime isn't usable.
+pytest.importorskip("google.protobuf")
+
 from typer.testing import CliRunner
 from neofs.cli import app
 
@@ -10,6 +15,10 @@ def test_cli_help():
     assert "create-container" in result.stdout
     assert "upload" in result.stdout
     assert "download" in result.stdout
+    assert "set-eacl" in result.stdout
+    assert "get-eacl" in result.stdout
+    assert "head-object" in result.stdout
+
 
 def test_cli_missing_args():
     """verify the CLI properly routes and blocks incomplete arg"""
@@ -17,3 +26,4 @@ def test_cli_missing_args():
     assert result.exit_code != 0
     # typer outputs errors to stderr, so check combined output
     assert "Missing argument" in result.output
+

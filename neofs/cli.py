@@ -54,13 +54,14 @@ def download(
     wallet: str,
     password: str,
     mainnet: bool = False,
+    range: str = typer.Option("", "--range", help="Byte range (e.g., bytes=0-1023)"),
 ):
     """Download a file from NeoFS."""
     endpoint = "st1.fs.neo.org:8082" if mainnet else "st1.t5.fs.neo.org:8082"
     client = NeoFSClient(endpoint=endpoint)
     client.load_wallet(wallet, password)
 
-    client.get_object(container, object_id, out_path)
+    client.get_object(container, object_id, out_path, byte_range=range)
     console.print(f"[green]File downloaded to[/green] {out_path}")
 
 

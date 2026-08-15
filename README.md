@@ -6,6 +6,26 @@ A pure Python gRPC client and CLI for the NeoFS distributed storage network, wit
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 
+## What's New in v0.5.0
+
+- NeoFS API 2.25 compatibility (Node v0.55.0 "Moido")  
+- HTTP-style range GET: `get_object(..., byte_range="bytes=0-1023")`
+- EACL record comment field support
+
+### Previous Highlights
+
+- **Extended ACL (eACL)** support via `set_eacl()` / `get_eacl()`.
+- **Object Head / Hash** helpers:
+  - `head_object(container_id, object_id)`
+  - `get_object_hash(container_id, object_id, algo="sha256")`
+- **Non-ASCII object attribute encoding** for REST Gateway compatibility using `__NEOFS__ATTRS_BASE64`.
+- **CLI commands**:
+  - `set-eacl`
+  - `get-eacl`
+  - `head-object`
+
+### Previous changes
+
 ## 🚀 What's New in v0.2.0
 
 ### Neo X EVM Funding Support
