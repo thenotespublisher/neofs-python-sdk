@@ -8,6 +8,11 @@ A pure Python gRPC client and CLI for the NeoFS distributed storage network, wit
 
 ## What's New in v0.5.0
 
+- NeoFS Node v0.55.0 "Moido" compatibility
+- HTTP-style range GET: `get_object(..., byte_range="bytes=0-1023")`
+- EACL record comment field support
+- Fixed `list_objects` to use SearchV2 (deprecated Search removed from nodes)
+
 - NeoFS API 2.25 compatibility (Node v0.55.0 "Moido")  
 - HTTP-style range GET: `get_object(..., byte_range="bytes=0-1023")`
 - EACL record comment field support
